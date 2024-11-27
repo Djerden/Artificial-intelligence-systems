@@ -5,104 +5,116 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from tabulate import tabulate
 
+# Функция для вывода статистики по данным
+def print_data_statistics(data):
+    print("Статистика по данным:")
+    print(tabulate(data.describe(), headers='keys', tablefmt='pretty'))
 
-DATA_PATH = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "students_set.csv")
-)
-data = pd.read_csv(DATA_PATH)
-data = data.replace({'Yes': 1, 'No': 0})
+# Визуализируем данные
+def plot_data_histograms(data):
+    data.hist(bins=50, figsize=(20, 15), color='skyblue')
+    plt.show()
 
-print("Статистика по данным:")
-print(tabulate(data.describe(), headers='keys', tablefmt='pretty'))
+# Нормализация данных
+def normalize_data(data):
+    return (data - data.mean()) / data.std()
 
-data.hist(bins=50, figsize=(20, 15), color='purple')
-plt.show()
+# Добавление синтетического признака
+def add_synthetic_feature(data):
+    data["hours_scores_interaction"] = (
+        data["Hours Studied"] * data["Previous Scores"]
+    )
+    return data
 
-data = data.dropna()
-
-# нормализация данных
-data_normalized = (data - data.mean()) / data.std()
-
-# синтетический признак (взаимодействие признаков)
-data_normalized["hours_scores_interaction"] = (
-    data_normalized["Hours Studied"] * data_normalized["Previous Scores"]
-)
-
-# обучающий и тестовый набор
-train_set, test_set = train_test_split(data_normalized, test_size=0.2, random_state=42)
-
-# линейная регрессия
+# Функция для линейной регрессии
 def linear_regression(X, y):
     X_transpose = X.T
-    return np.linalg.inv(X_transpose.dot(X)).dot(X_transpose).dot(y) #обратная
+    return np.linalg.inv(X_transpose.dot(X)).dot(X_transpose).dot(y)
 
-# оценка производительности (коэффициент детерминации R^2)
-def r_squared(X, y, theta): 
-    y_pred = X.dot(theta) #предсказание целевого признака 
-    ss_res = np.sum((y - y_pred) ** 2) #остатки
-    ss_tot = np.sum((y - np.mean(y)) ** 2) #общая сумма квадратов
-    return 1 - (ss_res / ss_tot) #объясняет ли модель изменчивость данных
+# Оценка модели с помощью R²
+def r_squared(X, y, theta):
+    y_pred = X.dot(theta)  # предсказание целевого признака
+    ss_res = np.sum((y - y_pred) ** 2)  # остатки
+    ss_tot = np.sum((y - np.mean(y)) ** 2)  # общая сумма квадратов
+    return 1 - (ss_res / ss_tot)  # объясняет ли модель изменчивость данных
 
-# модель 1: несколько признаков
-X_train_1 = train_set[["Hours Studied", "Previous Scores"]].values
-y_train_1 = train_set["Performance Index"].values
-X_train_1 = np.c_[np.ones(X_train_1.shape[0]), X_train_1] #добавляем столбец для смещения
-theta_1 = linear_regression(X_train_1, y_train_1)
-r2_1 = r_squared(X_train_1, y_train_1, theta_1)
+# Функция для подготовки данных (добавление столбца для смещения)
+def prepare_data(X):
+    return np.c_[np.ones(X.shape[0]), X]  # добавляем столбец для смещения
 
-# модель 2: больше признаков
-X_train_2 = train_set[["Hours Studied", "Previous Scores", "Sleep Hours"]].values
-y_train_2 = train_set["Performance Index"].values
-X_train_2 = np.c_[np.ones(X_train_2.shape[0]), X_train_2]
-theta_2 = linear_regression(X_train_2, y_train_2)
-r2_2 = r_squared(X_train_2, y_train_2, theta_2)
+# Функция для тренировки и оценки модели
+def train_and_evaluate_model(train_set, test_set, features, target):
+    # Обучение модели
+    X_train = train_set[features].values
+    y_train = train_set[target].values
+    X_train = prepare_data(X_train)
+    
+    theta = linear_regression(X_train, y_train)
+    r2_train = r_squared(X_train, y_train, theta)
 
-# модель 3: больше признаков + синтетический признак
-X_train_3 = train_set[
-    ["Sleep Hours", "Sample Question Papers Practiced", "hours_scores_interaction"]
-].values
-y_train_3 = train_set["Performance Index"].values
-X_train_3 = np.c_[np.ones(X_train_3.shape[0]), X_train_3]
-theta_3 = linear_regression(X_train_3, y_train_3)
-r2_3 = r_squared(X_train_3, y_train_3, theta_3)
+    # Оценка на тестовом наборе
+    X_test = test_set[features].values
+    y_test = test_set[target].values
+    X_test = prepare_data(X_test)
+    
+    r2_test = r_squared(X_test, y_test, theta)
+    
+    return r2_train, r2_test, theta
 
-# сравнение моделей
-models_data = [
-    ["Модель 1", r2_1],
-    ["Модель 2", r2_2],
-    ["Модель 3 (с синтетическим признаком)", r2_3]
-]
-print("\nСравнение моделей (коэффициент детерминации R²):")
-print(tabulate(models_data, headers=["Модель", "R²"], tablefmt='pretty'))
+# Основной код
+if __name__ == "__main__":
 
-# оценка на тестовом наборе для первой модели
-X_test_1 = test_set[["Hours Studied", "Previous Scores"]].values
-y_test_1 = test_set["Performance Index"].values
-X_test_1 = np.c_[np.ones(X_test_1.shape[0]), X_test_1]
-r2_test_1 = r_squared(X_test_1, y_test_1, theta_1)
+    # Загружаем данные
+    data = pd.read_csv("students_set.csv")
 
-# оценка на тестовом наборе для второй модели
-X_test_2 = test_set[["Hours Studied", "Previous Scores", "Sleep Hours"]].values
-y_test_2 = test_set["Performance Index"].values
-X_test_2 = np.c_[np.ones(X_test_2.shape[0]), X_test_2]
-r2_test_2 = r_squared(X_test_2, y_test_2, theta_2)
+    # Заменяем категориальные значения
+    data = data.replace({'Yes': 1, 'No': 0})
 
-# оценка на тестовом наборе для третьей модели
-X_test_3 = test_set[
-    ["Sleep Hours", "Sample Question Papers Practiced", "hours_scores_interaction"]
-].values
-y_test_3 = test_set["Performance Index"].values
-X_test_3 = np.c_[np.ones(X_test_3.shape[0]), X_test_3]
-r2_test_3 = r_squared(X_test_3, y_test_3, theta_3)
+    # Вывод статистики по данным
+    print_data_statistics(data)
+    
+    # Гистограммы данных
+    plot_data_histograms(data)
+    
+    # Предобработка данных
+    data = data.dropna()
+    data_normalized = normalize_data(data)
+    data_normalized = add_synthetic_feature(data_normalized)
+    
+    # Разделение на обучающий и тестовый наборы
+    train_set, test_set = train_test_split(data_normalized, test_size=0.2, random_state=42)
+    
+    # Описание признаков и целевой переменной
+    target = "Performance Index"
+    
+    # Модель 1: несколько признаков
+    features_1 = ["Hours Studied", "Previous Scores"]
+    
+    # Модель 2: больше признаков
+    features_2 = ["Hours Studied", "Previous Scores", "Sleep Hours"]
+    
+    # Модель 3: больше признаков + синтетический признак
+    features_3 = ["Sleep Hours", "Sample Question Papers Practiced", "hours_scores_interaction"]
+    
+    # Тренировка и оценка моделей
+    r2_train_1, r2_test_1, _ = train_and_evaluate_model(train_set, test_set, features_1, target)
+    r2_train_2, r2_test_2, _ = train_and_evaluate_model(train_set, test_set, features_2, target)
+    r2_train_3, r2_test_3, _ = train_and_evaluate_model(train_set, test_set, features_3, target)
 
-# сравнение моделей на тестовых данных
-test_models_data = [
-    ["Модель 1", r2_test_1],
-    ["Модель 2", r2_test_2],
-    ["Модель 3 (с синтетическим признаком)", r2_test_3]
-]
+    # Сравнение моделей на обучающих данных
+    models_data_train = [
+        ["Модель 1", r2_train_1],
+        ["Модель 2", r2_train_2],
+        ["Модель 3 (с синтетическим признаком)", r2_train_3]
+    ]
+    print("\nСравнение моделей на обучающих данных (коэффициент детерминации R²):")
+    print(tabulate(models_data_train, headers=["Модель", "R²"], tablefmt='pretty'))
 
-print("\nСравнение моделей на тестовых данных (коэффициент детерминации R²):")
-print(tabulate(test_models_data, headers=["Модель", "R² на тестовых данных"], tablefmt='pretty'))
-
-
+    # Сравнение моделей на тестовых данных
+    models_data_test = [
+        ["Модель 1", r2_test_1],
+        ["Модель 2", r2_test_2],
+        ["Модель 3 (с синтетическим признаком)", r2_test_3]
+    ]
+    print("\nСравнение моделей на тестовых данных (коэффициент детерминации R²):")
+    print(tabulate(models_data_test, headers=["Модель", "R² на тестовых данных"], tablefmt='pretty'))
