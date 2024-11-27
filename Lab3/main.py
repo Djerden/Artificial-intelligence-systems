@@ -6,7 +6,6 @@ from sklearn.model_selection import train_test_split
 from colorama import Fore, Style, init
 from tabulate import tabulate
 
-init(autoreset=True)
 
 DATA_PATH = os.path.normpath(
     os.path.join(os.path.dirname(__file__), "students_set.csv")
@@ -14,7 +13,7 @@ DATA_PATH = os.path.normpath(
 data = pd.read_csv(DATA_PATH)
 data = data.replace({'Yes': 1, 'No': 0})
 
-print(Fore.MAGENTA + "Статистика по данным:")
+print("Статистика по данным:")
 print(tabulate(data.describe(), headers='keys', tablefmt='pretty'))
 
 data.hist(bins=50, figsize=(20, 15), color='purple')
@@ -74,7 +73,7 @@ models_data = [
     ["Модель 2", r2_2],
     ["Модель 3 (с синтетическим признаком)", r2_3]
 ]
-print(Fore.LIGHTMAGENTA_EX + "\nСравнение моделей (коэффициент детерминации R²):")
+print("\nСравнение моделей (коэффициент детерминации R²):")
 print(tabulate(models_data, headers=["Модель", "R²"], tablefmt='pretty'))
 
 # оценка на тестовом наборе для первой модели
@@ -104,7 +103,7 @@ test_models_data = [
     ["Модель 3 (с синтетическим признаком)", r2_test_3]
 ]
 
-print(Fore.MAGENTA + "\nСравнение моделей на тестовых данных (коэффициент детерминации R²):")
+print("\nСравнение моделей на тестовых данных (коэффициент детерминации R²):")
 print(tabulate(test_models_data, headers=["Модель", "R² на тестовых данных"], tablefmt='pretty'))
 
 
