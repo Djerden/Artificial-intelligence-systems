@@ -98,31 +98,12 @@ X1 = X_train[model_columns]
 X1_test = X_test[model_columns]
 print(model_columns)
 
-# Модель 2
+# Модель 2 (Заранее заданные признаки)
 X2 = X_train[['Glucose', 'Insulin', 'BMI', 'Pedigree', 'Age']]
 X2_test = X_test[['Glucose', 'Insulin', 'BMI', 'Pedigree', 'Age']]
 
 models = {'Model 1': X1, 'Model 2': X2}
 tests = [X1_test, X2_test]
-scores = {}
-
-index = 0
-columns = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI', 'Pedigree', 'Age']
-
-# Модель 1 (Признаки выбираются случайно)
-count_of_columns = random.randint(2, len(columns) - 1)
-model_columns = np.random.choice(columns, size=count_of_columns, replace=False)
-X1 = X_train[model_columns]
-X1_test = X_test[model_columns]
-print(model_columns)
-
-# Модель 2
-X2 = X_train[['Glucose', 'Insulin', 'BMI', 'Pedigree', 'Age']]
-X2_test = X_test[['Glucose', 'Insulin', 'BMI', 'Pedigree', 'Age']]
-
-models = {'Model 1': X1, 'Model 2': X2}
-tests = [X1_test, X2_test]
-scores = {}
 
 # Вывод результатов для каждой модели и разных значений K
 for model_name, X_model in models.items():
