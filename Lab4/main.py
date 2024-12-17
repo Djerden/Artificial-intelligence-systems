@@ -8,8 +8,6 @@ from sklearn.metrics import confusion_matrix
 import os
 from tabulate import tabulate
 
-
-
 data = pd.read_csv("diabet_set.csv")
 
 # Обработка отсутствующих значений
@@ -23,11 +21,10 @@ data['BMI'] = data['BMI'].replace(0, np.nan)
 #Заполняем пустые значения средними значениями по столбцу
 data.fillna(data.mean(), inplace=True)
 
-data.hist(bins=50, figsize=(20, 15), color='purple')
+data.hist(bins=50, figsize=(20, 15), color='skyblue')
 plt.show()
 
-data = data.dropna()
-
+data = data.dropna() # удаление строк с NaN
 
 # Масштабирование данных
 scaler = StandardScaler()
@@ -106,7 +103,9 @@ models = {'Model 1': X1, 'Model 2': X2}
 for model_name, X_model in models.items():
     print(f"\nРезультаты для {model_name}:\n")
     for k in [3, 5, 10]:
+        # Предсказания 
         predictions = neighbors(X_model.values, y_train.values, X_test[X_model.columns].values, k)
+        # Матрица ошибок на основе предсказаний и реальных значений
         cm = confusion_matrix(y_test.values, predictions)
         
         correct = cm[0][0] + cm[1][1]
@@ -117,3 +116,5 @@ for model_name, X_model in models.items():
         print(tabulate(cm, headers=["Предсказано 0", "Предсказано 1"], showindex=["Факт 0", "Факт 1"], tablefmt="pretty"))
         
         print(f"Правильных классификаций: {correct}")
+        print(f"НЕправильных классификаций: {incorrect}")
+        print(f"Точность: {accuracy:.2f}%")

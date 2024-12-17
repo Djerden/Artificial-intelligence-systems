@@ -10,7 +10,7 @@ def print_data_statistics(data):
     print("Статистика по данным:")
     print(tabulate(data.describe(), headers='keys', tablefmt='pretty'))
 
-# Визуализируем данные
+# Визуализация данных
 def plot_data_histograms(data):
     data.hist(bins=50, figsize=(20, 15), color='skyblue')
     plt.show()
@@ -49,9 +49,11 @@ def train_and_evaluate_model(train_set, test_set, features, target):
     y_train = train_set[target].values
     X_train = prepare_data(X_train)
     
+    # Вектор коэффициентов, который описывает как признаки влиябт на целевой признак
     theta = linear_regression(X_train, y_train)
+    
     r2_train = r_squared(X_train, y_train, theta)
-
+    
     # Оценка на тестовом наборе
     X_test = test_set[features].values
     y_test = test_set[target].values
@@ -61,14 +63,21 @@ def train_and_evaluate_model(train_set, test_set, features, target):
     
     return r2_train, r2_test, theta
 
+# Функция для вычисления и вывода матрицы корреляции
+def print_correlation_matrix(data):
+    correlation_matrix = data.corr()  # Вычисляем корреляцию между признаками
+    print("\nМатрица корреляции:")
+    print(tabulate(correlation_matrix, headers='keys', tablefmt='fancy_grid'))
+
 # Основной код
 if __name__ == "__main__":
 
-    # Загружаем данные
+    # Загружаем датасет про обучение студентов
     data = pd.read_csv("students_set.csv")
 
     # Заменяем категориальные значения
     data = data.replace({'Yes': 1, 'No': 0})
+
 
     # Вывод статистики по данным
     print_data_statistics(data)
@@ -77,14 +86,22 @@ if __name__ == "__main__":
     plot_data_histograms(data)
     
     # Предобработка данных
-    data = data.dropna()
+    data = data.dropna() # удаление пропущенных значений (NaN)
     data_normalized = normalize_data(data)
     data_normalized = add_synthetic_feature(data_normalized)
     
+    # Вычисление и вывод матрицы корреляции до нормализации
+    print_correlation_matrix(data)
+
+    # Вычисление и вывод матрицы корреляции после нормализации
+    print_correlation_matrix(data_normalized)
+
+
     # Разделение на обучающий и тестовый наборы
     train_set, test_set = train_test_split(data_normalized, test_size=0.2, random_state=42)
     
-    # Описание признаков и целевой переменной
+    # Описание признаков 
+    # Целевой признак
     target = "Performance Index"
     
     # Модель 1: несколько признаков
